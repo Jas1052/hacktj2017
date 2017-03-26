@@ -214,7 +214,7 @@ public class TensorFlowImageListener implements OnImageAvailableListener {
             String bestWord = "";
             for (final Classifier.Recognition result : results) {
               float currentConf = result.getConfidence();
-              if (currentConf >= 0.0003 && currentConf >= max) {
+              if (currentConf >= 0.2 && currentConf >= max) {
                 max = currentConf;
                 bestWord = result.getTitle();
               }
