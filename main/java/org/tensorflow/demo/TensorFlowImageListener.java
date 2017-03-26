@@ -219,7 +219,7 @@ public class TensorFlowImageListener implements OnImageAvailableListener {
                 bestWord = result.getTitle();
               }
             }
-
+            ttobj.setPitch((1-max)*2);
             ttobj.speak(bestWord, TextToSpeech.QUEUE_FLUSH, null, null);
 
             scoreView.setResults(results);
