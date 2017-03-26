@@ -537,7 +537,7 @@ public class CameraConnectionFragment extends Fragment {
     }
 
     LOGGER.i("Getting assets.");
-    tfPreviewListener.initialize(
+    tfPreviewListener.initialize(getActivity(),
         getActivity().getAssets(), scoreView, inferenceHandler, sensorOrientation);
     LOGGER.i("TensorFlow initialized.");
   }

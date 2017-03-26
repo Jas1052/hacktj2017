@@ -15,6 +15,7 @@ limitations under the License.
 
 package org.tensorflow.demo;
 
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -26,6 +27,7 @@ import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
 import android.os.Trace;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
 import junit.framework.Assert;
@@ -34,6 +36,7 @@ import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with Tensorflow.
@@ -70,6 +73,7 @@ public class TensorFlowImageListener implements OnImageAvailableListener {
   private int[] rgbBytes = null;
   private Bitmap rgbFrameBitmap = null;
   private Bitmap croppedBitmap = null;
+  private Context context;
 
   private boolean computing = false;
   private Handler handler;
@@ -77,6 +81,7 @@ public class TensorFlowImageListener implements OnImageAvailableListener {
   private RecognitionScoreView scoreView;
 
   public void initialize(
+          final Context context,
       final AssetManager assetManager,
       final RecognitionScoreView scoreView,
       final Handler handler,
@@ -88,6 +93,7 @@ public class TensorFlowImageListener implements OnImageAvailableListener {
     this.scoreView = scoreView;
     this.handler = handler;
     this.sensorOrientation = sensorOrientation;
+    this.context = context;
   }
 
   private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
@@ -189,23 +195,38 @@ public class TensorFlowImageListener implements OnImageAvailableListener {
       ImageUtils.saveBitmap(croppedBitmap);
     }
 
-    handler.post(
+    final TextToSpeech ttobj = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+      @Override
+      public void onInit(int status) {
+      }
+    });
+    ttobj.setLanguage(Locale.US);
+
+    handler.postDelayed(
         new Runnable() {
           @Override
           public void run() {
             final List<Classifier.Recognition> results = tensorflow.recognizeImage(croppedBitmap);
 
             LOGGER.v("%d results", results.size());
+
+            float max = 0;
+            String bestWord = "";
             for (final Classifier.Recognition result : results) {
-              LOGGER.v("Result: " + result.getTitle());
+              float currentConf = result.getConfidence();
+              if (currentConf >= 0.0003 && currentConf >= max) {
+                max = currentConf;
+                bestWord = result.getTitle();
+              }
             }
-            Log.e("", "hello");
-            Log.e("", results.toString());
+
+            ttobj.speak(bestWord, TextToSpeech.QUEUE_FLUSH, null, null);
+
             scoreView.setResults(results);
 
             computing = false;
           }
-        });
+        }, 1000);
 
     Trace.endSection();
   }
